@@ -79,6 +79,7 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComp->BindAction(TeleportAction, ETriggerEvent::Started, this, &AVRCharacter::StartTeleport);
 		EnhancedInputComp->BindAction(TeleportAction, ETriggerEvent::Ongoing, this, &AVRCharacter::TeleportTargetting);
 		EnhancedInputComp->BindAction(TeleportAction, ETriggerEvent::Triggered, this, &AVRCharacter::CommitTeleport);
+		EnhancedInputComp->BindAction(GrabInputAction, ETriggerEvent::Triggered, this, &AVRCharacter::GrabActionTriggered);
 	}
 }
 
@@ -101,9 +102,22 @@ void AVRCharacter::Turn(const FInputActionValue& InputActionVal)
 	AddControllerYawInput(TurnAmt * TurnSpeed);
 }
 
+void AVRCharacter::GrabActionTriggered(const FInputActionValue& InputActionVal)
+{
+	float val = InputActionVal.Get<float>();
+	if (val > 0)
+	{
+		RightHandControllerComp->TryGrab();
+	}
+	else
+	{
+		RightHandControllerComp->Release();
+	}
+}
+
 void AVRCharacter::StartTeleport()
 {
-	PrintMsgOnScreen("Start");
+	RightAimControllerComp->StartTracing();
 }
 
 void AVRCharacter::TeleportTargetting()

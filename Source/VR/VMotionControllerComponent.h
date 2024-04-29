@@ -19,6 +19,8 @@ public:
 	void DoTracing();
 	FHitResult StopGetTracingResult() const;
 	virtual void BeginPlay() override;
+	void TryGrab();
+	void Release();
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Trace")
 	float TraceProjectileLaunchVelocity = 500.f;
@@ -33,4 +35,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	class UNiagaraSystem* TraceSystemAsset;
+
+	class UGrabComponent* CurrentlyGrabingComp;
 };

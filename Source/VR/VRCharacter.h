@@ -30,6 +30,8 @@ private:
 	void Move(const FInputActionValue& InputActionVal);
 
 	void Turn(const FInputActionValue& InputActionVal);
+
+	void GrabActionTriggered(const FInputActionValue& InputActionVal);
 	
 	void StartTeleport();
 	void TeleportTargetting();
@@ -37,6 +39,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	float TurnSpeed = 5.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	class UInputAction* GrabInputAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	class UInputMappingContext* InputMappingContext;

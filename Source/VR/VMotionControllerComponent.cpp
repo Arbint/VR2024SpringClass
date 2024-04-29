@@ -5,9 +5,11 @@
 #include "NiagaraComponent.h"
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NavigationSystem.h"
+#include "GrabComponent.h"
 
 void UVMotionControllerComponent::StartTracing()
 {
+	TraceComp->SetVisibility(true);
 }
 
 void UVMotionControllerComponent::DoTracing()
@@ -16,7 +18,7 @@ void UVMotionControllerComponent::DoTracing()
 	PathParams.ActorsToIgnore.Add(GetOwner());
 	PathParams.bTraceWithChannel = true;
 	PathParams.TraceChannel = ECC_Visibility;
-	PathParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	//PathParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
 	PathParams.StartLocation = GetComponentLocation();
 	PathParams.LaunchVelocity = GetForwardVector() * TraceProjectileLaunchVelocity;
 	PathParams.bTraceWithCollision = true;
@@ -41,11 +43,16 @@ void UVMotionControllerComponent::DoTracing()
 	{
 		Positions.Add(Pos.Location);
 	}
+
+	Positions.Add(TraceResult.HitResult.ImpactPoint);
+
 	UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(TraceComp, "RibbonPositions", Positions);
+	TraceComp->SetVectorParameter("EndPosition", TraceResult.HitResult.ImpactPoint);
 }
 
 FHitResult UVMotionControllerComponent::StopGetTracingResult() const
 {
+	TraceComp->SetVisibility(false);
 	return TraceResult.HitResult;
 }
 
@@ -56,5 +63,36 @@ void UVMotionControllerComponent::BeginPlay()
 	TraceComp->SetAsset(TraceSystemAsset);
 	TraceComp->SetupAttachment(this);
 	TraceComp->RegisterComponent();
-	//TraceComp->SetHiddenInGame(true);
+	TraceComp->SetVisibility(false);
+}
+
+void UVMotionControllerComponent::TryGrab()
+{
+	TArray<FOverlapResult> Results;
+	FCollisionShape ColShape;
+	ColShape.SetSphere(100.f);
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(GetOwner());
+	if (GetWorld()->OverlapMultiByChannel(Results, GetComponentLocation(), FQuat::Identity, ECC_Visibility, ColShape, Params))
+	{
+		for (const FOverlapResult& Result : Results)
+		{
+			AActor* Actor = Result.GetActor();
+			UGrabComponent* GrabComp = Actor->FindComponentByClass<UGrabComponent>();
+			if (GrabComp)
+			{
+				GrabComp->Grab(this);
+				CurrentlyGrabingComp = GrabComp;
+				return;
+			}
+		}
+	}
+}
+
+void UVMotionControllerComponent::Release()
+{
+	if (CurrentlyGrabingComp)
+	{
+		CurrentlyGrabingComp->Release();
+	}
 }
